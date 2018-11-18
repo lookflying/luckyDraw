@@ -47,7 +47,7 @@ function Shuffle(arr) {
 
 var prizeName={"一等奖":"戴森吹风机","二等奖":"B&O Beoplay E8 耳机","三等奖":"正版 Pokemon 玩偶"}
 var prizeCount={"一等奖":"3","二等奖":"5","三等奖":"10"}
-var whiteList = {"一等奖":[188],"二等奖":[256, 366]}
+var whiteList = {"一等奖":[188],"二等奖":[366]}
 var prizeResult = {}
 
 goodNums = GetNums(maxNum)
