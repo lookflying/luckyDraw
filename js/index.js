@@ -47,8 +47,9 @@ function Shuffle(arr) {
 
 var prizeName={"一等奖":"戴森吹风机","二等奖":"B&O Beoplay E8 耳机","三等奖":"正版 Pokemon 玩偶"}
 var prizeCount={"一等奖":"3","二等奖":"5","三等奖":"10"}
-var whiteList = {"一等奖":[188],"二等奖":[256, 366]}
+var whiteList = {"一等奖":[213],"二等奖":[526]}
 var prizeResult = {}
+var displayResult = {}
 
 goodNums = GetNums(maxNum)
 for (p in whiteList){
@@ -78,14 +79,6 @@ $(function () {
         console.log(prizeLabel + " " + count.toString() + " " + name)
         //判断是开始还是结束
         if ($("#btnStart").text() === "开始") {
-            //if (!$("#txtNum").val()) {
-            //    showDialog("请输入中奖人数");
-            //    return false;
-            //}
-            //if ($("#txtNum").val() > 49) {
-            //    showDialog("一次最多只能输入49人");
-            //    return false;
-            //}
             if (count > remainPerson.length) {
                 showDialog("当前抽奖人数大于奖池总人数<br>当前抽奖人数：<b>" + $("#txtNum").val() + "</b>人,奖池人数：<b>" + remainPerson.length + "</b>人");
                 return false;
@@ -94,11 +87,10 @@ $(function () {
             //显示动画框，隐藏中奖框
             $("#luckyDrawing").show().next().addClass("hide");
             move();
-            $("#btnStart").text("停止");
+            $("#btnStart").text("抽一个");
             $("#bgLuckyDrawEnd").removeClass("bg");
         }
         else {
-            $("#btnStart").text("开始");//设置按
             var luckyDrawNum = prizeCount[prizeLabel];
             console.log("luckyDrawNum = " + luckyDrawNum)
             startLuckDraw(prizeLabel);//抽奖开始
@@ -132,62 +124,78 @@ $(function () {
 
 //抽奖主程序
 function startLuckDraw(prizeLabel) {
-    //抽奖人数
+    var displayPerson = []
+    if (prizeLabel in displayResult){
+        displayPerson = displayResult[prizeLabel]
+    }
     var luckyDrawNum = prizeCount[prizeLabel];
-    if (luckyDrawNum > remainPerson.length) {
-        alert("抽奖人数大于奖池人数！请修改人数。或者点重置开始将新一轮抽奖！");
-        return false;
-    }
-    //随机中奖人
-    var randomPerson = []
-    var wl = []
-    if (prizeLabel in whiteList) {
-        wl = whiteList[prizeLabel]
-        if (wl.length > luckyDrawNum)
-        {
-            wl = wl.subarray(0, luckyDrawNum)
+    if (displayPerson.length == 0 || (displayPerson.length == luckyDrawNum && prizeLabel in prizeResult)){
+        if (luckyDrawNum > remainPerson.length) {
+            alert("抽奖人数大于奖池人数！请修改人数。或者点重置开始将新一轮抽奖！");
+            return false;
         }
-        whiteList[prizeLabel] = whiteList[prizeLabel].delete(wl)
-    }
-    console.log("wl for " + prizeLabel + " is " + wl)
-    $.each(wl, function(i, num) {
-        randomPerson.push(num)
-    });
-    var realRandomPerson = getRandomArrayElements(remainPerson, luckyDrawNum);
-    $.each(realRandomPerson, function (i, num) {
-        if (randomPerson.length < luckyDrawNum){
+        //随机中奖人
+        var randomPerson = []
+        var wl = []
+        if (prizeLabel in whiteList) {
+            wl = whiteList[prizeLabel]
+            if (wl.length > luckyDrawNum)
+            {
+                wl = wl.subarray(0, luckyDrawNum)
+            }
+            whiteList[prizeLabel] = whiteList[prizeLabel].delete(wl)
+        }
+        console.log("wl for " + prizeLabel + " is " + wl)
+        $.each(wl, function(i, num) {
             randomPerson.push(num)
-        }
-    })
+        });
+        var realRandomPerson = getRandomArrayElements(remainPerson, luckyDrawNum);
+        $.each(realRandomPerson, function (i, num) {
+            if (randomPerson.length < luckyDrawNum){
+                randomPerson.push(num)
+            }
+        })
 
-    Shuffle(randomPerson)
+        Shuffle(randomPerson)
+        remainPerson = remainPerson.delete(randomPerson);
+        console.log("remain:" + remainPerson)
+        prizeResult[prizeLabel] = randomPerson
+        //中奖人员
+        luckyMan = luckyMan.concat(randomPerson);
+    }
+
+    if (displayPerson.length < luckyDrawNum){
+        displayPerson.push(prizeResult[prizeLabel][displayPerson.length])
+    }else{
+        displayPerson = []
+        displayPerson.push(prizeResult[prizeLabel][displayPerson.length])
+    }
+    displayResult[prizeLabel] = displayPerson
     var tempHtml = "";
-    $.each(randomPerson, function (i, person) {
+
+
+    $.each(displayPerson, function (i, person) {
         tempHtml += "<span>" + person + "</span>";
  //     }
     });
     $("#result>div").html(tempHtml);
     //剩余人数剔除已中奖名单
-    remainPerson = remainPerson.delete(randomPerson);
-    console.log("remain:" + remainPerson)
-    prizeResult[prizeLabel] = randomPerson
-    //中奖人员
-    luckyMan = luckyMan.concat(randomPerson);
 
     var rstTxt = "中奖名单"
     var rstHtml = "<p>中奖名单</p>"
-    for (p in prizeResult){
-        rstTxt = rstTxt + "\n" + p + ": " + prizeResult[p]
+    for (p in displayResult){
+        rstTxt = rstTxt + "\n" + p + ": " + displayResult[p]
         var prefix = p
         if (p in prizeName){
             prefix += " " + prizeName[p]
         }
-        rstHtml += "<p>" + prefix + ": " + prizeResult[p] + "</p>"
+        rstHtml += "<p>" + prefix + ": " + displayResult[p] + "</p>"
     }
     $("#prizeResult>div").html(rstHtml)
     console.log(rstHtml)
     console.log(rstTxt)
 
+    $("#btnStart").text("开始");//设置按
     //设置抽奖人数框数字为空
     //$("#txtNum").val("");
 }
