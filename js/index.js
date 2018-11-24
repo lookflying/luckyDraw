@@ -1,5 +1,21 @@
 //抽奖人员名单
 var maxNum= 600
+var timer3
+
+function display10s(prizeLabel) {
+    var delay = 10000
+    clearTimeout(timer3)
+    console.log("clearTimeout and restart timeout")
+    timer3 = setTimeout(function () {
+        console.log("timeout show result")
+        $("#luckyDrawing").fadeOut();
+        var luckyDrawNum = prizeCount[prizeLabel];
+        $("#result").fadeIn().find("div").removeClass().addClass("p" + luckyDrawNum);//隐藏输入框，显示中奖框
+        $("#bgLuckyDrawEnd").addClass("bg");//添加中奖背景光辉
+        $("#txtNum").attr("placeholder", "输入中奖人数(" + remainPerson.length + ")");
+    }, delay)
+}
+
 function GetNums(maxNum){
     var goodNums = []
     numLen = maxNum.toString().length
@@ -73,6 +89,8 @@ $(function () {
     iconAnimation();
     //开始抽奖
     $("#btnStart").on("click", function () {
+        clearTimeout(timer3)
+        console.log("clearTimeout")
         var prizeLabel = $("#prize option:selected").text()
         var count = prizeCount[prizeLabel]
         var name = prizeName[prizeLabel]
@@ -94,11 +112,19 @@ $(function () {
             var luckyDrawNum = prizeCount[prizeLabel];
             console.log("luckyDrawNum = " + luckyDrawNum)
             startLuckDraw(prizeLabel);//抽奖开始
-            $("#luckyDrawing").fadeOut();
-            clearInterval(timer);//停止输入框动画展            $("#luckyDrawing").val(luckyMan[luckyMan.length - 1]);//输入框显示最后一个中奖名字
-            $("#result").fadeIn().find("div").removeClass().addClass("p" + luckyDrawNum);//隐藏输入框，显示中奖框
-            $("#bgLuckyDrawEnd").addClass("bg");//添加中奖背景光辉
-            //$("#txtNum").attr("placeholder", "输入中奖人数(" + remainPerson.length + ")");
+
+            clearInterval(timer);//停止输入框动画展
+             $("#luckyDrawing").val(displayResult[prizeLabel][displayResult[prizeLabel].length - 1]);//输入框显示最后一个中奖名字
+            var $showName = $("#showName"); //显示内容的input的ID
+            $showName.val(displayResult[prizeLabel][displayResult[prizeLabel].length - 1]);//输入框赋值
+
+           // $("#luckyDrawing").val(displayResult[prizeLabel][displayResult[prizeLabel].length - 1]);
+            //$("#luckyDrawing").fadeOut();
+            //var $showName = $("#showName"); //显示内容的input的ID
+
+            //$show_name.val(displayResult[prizeLabel][displayResult[prizeLabel].length - 1])
+            display10s(prizeLabel)
+
         }
     });
 
@@ -129,7 +155,7 @@ function startLuckDraw(prizeLabel) {
         displayPerson = displayResult[prizeLabel]
     }
     var luckyDrawNum = prizeCount[prizeLabel];
-    if (displayPerson.length == 0 || (displayPerson.length == luckyDrawNum && prizeLabel in prizeResult)){
+    if (displayPerson.length == 0 ){
         if (luckyDrawNum > remainPerson.length) {
             alert("抽奖人数大于奖池人数！请修改人数。或者点重置开始将新一轮抽奖！");
             return false;
@@ -161,15 +187,16 @@ function startLuckDraw(prizeLabel) {
         console.log("remain:" + remainPerson)
         prizeResult[prizeLabel] = randomPerson
         //中奖人员
-        luckyMan = luckyMan.concat(randomPerson);
+    }else if(displayPerson.length >= luckyDrawNum) {
+        var newPerson = getRandomArrayElements(remainPerson, 1);
+        prizeResult[prizeLabel].push(newPerson[0])
+        remainPerson = remainPerson.delete(newPerson);
+        console.log("remain:" + remainPerson)
     }
 
-    if (displayPerson.length < luckyDrawNum){
-        displayPerson.push(prizeResult[prizeLabel][displayPerson.length])
-    }else{
-        displayPerson = []
-        displayPerson.push(prizeResult[prizeLabel][displayPerson.length])
-    }
+    displayPerson.push(prizeResult[prizeLabel][displayPerson.length])
+    console.log("lucky man: " + displayPerson[displayPerson.length - 1].toString())
+    //luckyMan = luckyMan.concat(displayPerson[displayPerson.length - 1]);
     displayResult[prizeLabel] = displayPerson
     var tempHtml = "";
 
@@ -187,7 +214,7 @@ function startLuckDraw(prizeLabel) {
         rstTxt = rstTxt + "\n" + p + ": " + displayResult[p]
         var prefix = p
         if (p in prizeName){
-            prefix += " " + prizeName[p]
+            prefix += " " + prizeName[p] + "(" + displayResult[p].length + ")"
         }
         rstHtml += "<p>" + prefix + ": " + displayResult[p] + "</p>"
     }
@@ -208,8 +235,11 @@ function move() {
     timer = setInterval(function () {
         var i = GetRandomNum(0, remainPerson.length);
         $showName.val(remainPerson[i]);//输入框赋值
+        console.log("move " + remainPerson[i])
     }, interTime);
 }
+
+
 
 //顶上的小图标，随机动画
 function iconAnimation() {
